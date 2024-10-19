@@ -46,29 +46,21 @@ def main():
         df = pd.read_csv("dataset/train.csv")
         df = df.drop(columns=["id"], axis=1)
         logging.info("Import Train Dataset")
+        
         # Preprocess the comments
         df = preprocess(df)
-        df.to_csv("dataset/preprocessed_data.csv",index=False,header=True)
+        df.to_csv("dataset/preprocessed_data.csv", index=False, header=True)
         logging.info("Preprocessing Completed")
 
-        # Split data into training and test sets
-        X = df['comment_text']
-        y = df.drop(columns=['comment_text'], axis=1)
-
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        logging.info("Train-Test-Split")
         # TF-IDF Vectorizer
         tfidf = TfidfVectorizer(stop_words='english')
-
-        # Fit on training data
-        X_train_tfidf = tfidf.fit_transform(X_train)
-
+        # Fit on the entire dataset after preprocessing
+        X_tfidf = tfidf.fit_transform(df['comment_text'])
+        
         # Save the preprocessor (TF-IDF) as a .pkl file
         with open('artifacts/preprocessor.pkl', 'wb') as f:
             pickle.dump(tfidf, f)
         logging.info("Dumped Preprocessor Pickel File")
-        return X_train_tfidf, X_test, y_train, y_test
-    
     except Exception as e:
         raise CustomException(e,sys)
 

@@ -41,12 +41,42 @@ def predict():
 
         labels = ['toxic','severe_toxic','obscene','threat','insult','identity_hate']
         # Prepare the response
-        result = {label: 1 if pred else 0 for label, pred in zip(labels, prediction[0])}
+        result = {label: int(pred) for label, pred in zip(labels, prediction[0])}
         
         return jsonify(result)
 
     except Exception as e:
         logging.error("Error in prediction: %s", str(e))
+        raise CustomException(e)
+
+@app.route('/predict_bulk', methods=['POST'])
+def predict_bulk():
+    try:
+        # Get the JSON request which contains a list of comments
+        data = request.get_json(force=True)
+        comments = data['comments']
+
+        # Load the model
+        model = load_model()
+
+        # Preprocess each comment
+        processed_comments = [preprocess_input(comment) for comment in comments]
+
+        # Make predictions in bulk
+        predictions = model.predict(processed_comments)
+
+        labels = ['toxic','severe_toxic','obscene','threat','insult','identity_hate']
+
+        # Prepare the response for all comments
+        result = []
+        for idx, pred in enumerate(predictions):
+            prediction_result = {label: int(p) for label, p in zip(labels, pred)}
+            result.append({"comment": comments[idx], "prediction": prediction_result})
+        
+        return jsonify(result)
+
+    except Exception as e:
+        logging.error("Error in bulk prediction: %s", str(e))
         raise CustomException(e)
 
 if __name__ == '__main__':
